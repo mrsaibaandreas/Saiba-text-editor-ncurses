@@ -1,0 +1,2 @@
+#!/bin/bash
+gcc -Wall -g -O2 main.c -o editor -lncurses
