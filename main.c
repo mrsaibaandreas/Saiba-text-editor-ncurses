@@ -8,7 +8,8 @@ typedef enum state {
     RAW,
     INSERT
 } editor_state;
-int row, col;
+int row = 0; int col = 0;
+int max_row, max_col;
 editor_state state = RAW;
 
 void display_windows_size() {
@@ -22,31 +23,31 @@ void display_windows_size() {
 void display_row_number() {
     attron(A_BOLD);
     int i = 0;
-    while (i < row)
+    while (i < max_row)
     {
-        mvprintw(i, 0,"%i", i + 1);
+        mvprintw(i, 0,"%3i", i + 1);
         i++;
     }
 }
 void display_state() {
     if (state == RAW)
-        mvprintw(row - 1, 0, "State: normal");
+        mvprintw(max_row - 1, 0, "State: normal");
     else    
-        mvprintw(row - 50, 0, "State: insert");
+        mvprintw(max_row - 50, 0, "State: insert");
 }
 void display_data() {
     display_windows_size();
     display_row_number();
     display_state();
-    move(0,1);
+    move(0,1); // TO-DO: wrapper when calling move, to auto update row and col
+    //row = 0; col = 1;
 }
 
 int main() {
     initscr();
-    getmaxyx(stdscr,row,col);		/* get the number of rows and columns */
-
+    getmaxyx(stdscr,max_row,max_col);		/* get the number of rows and columns */
     noecho(); // user input not displayed
-    mvprintw(row/2, (col - 1 -strlen(EDITOR_NAME))/2, "%s", EDITOR_NAME);
+    mvprintw(max_row/2, (max_col- 1 -strlen(EDITOR_NAME))/2, "%s", EDITOR_NAME);
     display_data();
     refresh();
     while (1) {
