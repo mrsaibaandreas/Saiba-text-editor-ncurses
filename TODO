@@ -1,6 +1,5 @@
 1. Create windows as described in the png
 2. Update states in loop based on user input
-3. Learn to read all keyboard punches (in order to update the cursor position)
 4. CHeck a method to read efficiently from files and display just window size information
 5. Create a buffer storage for editing files
 6. Create github repo
