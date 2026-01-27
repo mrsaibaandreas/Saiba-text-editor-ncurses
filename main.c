@@ -2,20 +2,30 @@
 #include <unistd.h>
 #include <string.h>
 #include <ncurses.h>
+#include "logger.h"
 
 #define EDITOR_NAME "Saiba's editor"
 
-typedef enum state {
+typedef enum editor_state {
     RAW,
     INSERT
 } editor_state;
+
+typedef struct editor_s{
+    WINDOW *win;
+    int col;
+    int row;
+} editor_s;
+
+void init_window(editor_s *window, int ncol, int nlines, int begin_y, int begin_x); 
 
 int row = 0; int col = 0;
 int max_row, max_col;
 
 editor_state state = RAW;
 
-WINDOW *main_w, *row_w, *info_w;
+editor_s main_w = {NULL, 0,0}; // TO-DO make every struct initialized like this
+editor_s  row_w, info_w;
 
 // Callbacks for updating screen data
 void onInfoUpdate(); 
@@ -23,100 +33,104 @@ void onRowUpdate();
 
 void display_windows_size();
 void display_row_number();
-void display_state(); 
 void display_data(); 
 
 void init_screen(); // this functions initialize screen related structures
 
 int main() {
+    INIT_LOG("log/test/");
     init_screen();
-    int input = wgetch(main_w);
+    int input; 
     clear();
-    while (1) {
-        int loop_state = 1;
+    LOG_D("Logging of editor initialized");
+    while ((input = getch()) != 'q') {
         switch(input) {
             case KEY_UP:
-                if (row == 0)
+                if (main_w.row == 0)
                     break;
-                row--;
+                main_w.row--;
                 break;
             case KEY_DOWN:
-                if (row == max_row)
+                if (main_w.row == max_row)
                     break;
-                row++;
+                main_w.row++;
                 break;
             case KEY_RIGHT:
-                if (col == max_col)
+                if (main_w.col == max_col)
                     break;
-                col++;
+                main_w.col++;
                 break;
             case KEY_LEFT:
-                if (col == 0)
+                if (main_w.col == 0)
                     break;
-                col--;
-                break;
-            case 'q':
-                loop_state = 0;
+                main_w.col--;
                 break;
             default:
-                mvwprintw(main_w, max_row -1, 10, "WHat5 the hell");
+                
+                LOG_I(WARNING, "Inconsistent area, key %i pressed", input);
                 break;
         }
-        if (!loop_state)
-            break;
-        display_data();
         refresh();
-    mvwprintw(main_w, max_row - 10, (max_col- 1 -strlen(EDITOR_NAME))/2, "%i %i", row, col);
-    wrefresh(main_w);
-        input = wgetch(main_w);
+        wrefresh(main_w.win);
+        mvwprintw(main_w.win, max_row/2, (max_col - 1)/2, "%i %i", main_w.row, main_w.col);
+        display_data();
     }
     endwin(); // close the screen
     return 0;
 }
+
+void init_window(editor_s *window, int ncol, int nlines, int begin_y, int begin_x) {
+    window->win = newwin(ncol, nlines, begin_y, begin_x);
+    window->col = ncol - 1;
+    window->row = nlines - 1;
+    LOG_D("Window init with %i %i", window->col, window->row);
+}
+
 void init_screen() {
     initscr();
     getmaxyx(stdscr,max_row,max_col);		/* get the number of rows and columns */
     noecho(); // user input not displayed
     cbreak();
-    keypad(main_w, TRUE);
-    main_w = newwin(max_row - 1,  max_col - 4, 0, 3);
-    row_w = newwin(max_row - 1, 3, 0 ,0);
-    info_w = newwin(1, max_col - 1, max_row - 1, 0); 
-    mvwprintw(main_w, max_row/2, (max_col- 1 -strlen(EDITOR_NAME))/2, "%s", EDITOR_NAME);
-
+    keypad(stdscr, TRUE);
+    init_window(&main_w, max_row - 2, max_col -4, 0, 3);
+    init_window(&row_w, max_row - 1, 3, 0, 0);
+    init_window(&info_w, 1, max_col, max_row - 1, 0);
+    mvprintw(win, max_row/2, (max_col - 1 - strlen(EDITOR_NAME))/2, "%s", EDITOR_NAME);
     display_data();
-    wrefresh(main_w);
+    wrefresh(main_w.win);
 }
 
 void display_windows_size() {
     attron(A_BOLD);
+    if (state == RAW)
+        mvwprintw(info_w.win, 0, 0, "State: normal");
+    else    
+        mvwprintw(info_w.win, 0, 0, "State: insert");
     char windows_size[32];
     snprintf(windows_size, 32, "R:%i C:%i, %i:%i", max_row, max_col, row, col); 
-    mvprintw(max_row - 1, max_col - strlen(windows_size), "%s", windows_size);
+    mvwprintw(info_w.win, 0, max_col - strlen(windows_size), "%s", windows_size);
+    LOG_D("INFO_W row: %i col: %i", info_w.row, info_w.col);
     attroff(A_BOLD);
+    wrefresh(info_w.win);
 }
 
 void display_row_number() {
-    attron(A_BOLD);
+    wattron(row_w.win, A_BOLD);
     int i = 0;
     while (i < max_row)
     {
-        mvwprintw(row_w, i, 0,"%3i", i + 1);
+        mvwprintw(row_w.win, i, 0,"%3i", i + 1);
         i++;
     }
-    wrefresh(row_w);
+    LOG_D("ROW_W row:%i col:%i", row_w.row, row_w.col);
+    wrefresh(row_w.win);
+    wattroff(row_w.win, A_BOLD);
 }
-void display_state() {
-    if (state == RAW)
-        mvwprintw(main_w, max_row - 1, 0, "State: normal");
-    else    
-        mvwprintw(main_w, max_row - 50, 0, "State: insert");
-    wrefresh(main_w);
-}
+
 void display_data() {
     display_windows_size();
     display_row_number();
-    display_state();
-    wmove(main_w, row, col);// TO-DO: wrapper when calling move, to auto update row and col
-    wrefresh(main_w);
+    wmove(main_w.win, main_w.row, main_w.col);// TO-DO: wrapper when calling move, to auto update row and col
+    printf("%i %i\n", main_w.row, main_w.col);
+    wrefresh(main_w.win);
 }

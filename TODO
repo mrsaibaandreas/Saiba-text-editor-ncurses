@@ -1,6 +1,10 @@
-1. Create windows as described in the png
+1. Create windows as described in the png (DONE)
 2. Update states in loop based on user input
 4. CHeck a method to read efficiently from files and display just window size information
 5. Create a buffer storage for editing files
-6. Create github repo
+6. Create github repo (DONE)
+
+BUG:
+    When trying to read from a different window, escape characters are not interpreted.
+    Check why, read ncurses implementation for special chars.
 

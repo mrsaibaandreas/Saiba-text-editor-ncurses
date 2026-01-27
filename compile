@@ -1,2 +1,2 @@
 #!/bin/bash
-gcc -Wall -g -O2 main.c -o editor -lncurses
+gcc -O0 -Wall -Iaux/logger/ -DDEBUG_A -g -O2 main.c -o editor -lncurses
