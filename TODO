@@ -3,8 +3,12 @@
 4. CHeck a method to read efficiently from files and display just window size information
 5. Create a buffer storage for editing files
 6. Create github repo (DONE)
+7. Cleanup the code
+8. Find a nicer method for display current position of variables onto the screen, it's hardcoded
+    and ugly
 
 BUG:
     When trying to read from a different window, escape characters are not interpreted.
     Check why, read ncurses implementation for special chars.
-
+    RCA: Use of main_w before newwin is called for initialization
+    Solution: Initialize the WINDOW before calling keypad upon it.
