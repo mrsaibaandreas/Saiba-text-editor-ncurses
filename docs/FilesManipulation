@@ -1,0 +1,25 @@
+1. File opening
+2. File reading
+3. File display
+4. Scrolling
+1. File opening
+    1.1 The files will be opened via the open() syscall. So for the open file, a file descriptor
+    is returned
+
+    e.g: int fd = open("file", <mode>, <flags>)
+
+2. File reading    
+    1.1 Based on the window size, the window.max_row lines from the file will be read via read()
+        syscall
+    
+    1.2 The buffer will read in chuncks of 1kB  (subject to change) and display on the screen until
+        the window.max_row line is read until EOL. By displaying, is meant mvwprintw.
+    
+
+3. File display
+    3.1 wrefresh upon main_w.win is called 
+
+4. Scrolling
+    4.1 For scrolling only one line will be read until EOL.
+    4.2 - Remove first line, add last line (maybe use a circular buffer ??? )
+        - Update the row number pad from the left side

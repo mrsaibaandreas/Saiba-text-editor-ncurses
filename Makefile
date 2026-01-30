@@ -1,6 +1,6 @@
 .PHONY: all clean test
 CC = gcc
-CFLAGS = -O0 -Wall -Wextra -g -DDEBUG
+CFLAGS = -O0 -Wall -Wextra -g -DDEBUG_A
 INCLUDES = -Iaux/logger/
 LIBS = -lncurses
 
@@ -13,5 +13,5 @@ test: editor
 	./bin/editor
 
 clean:
-	rm -rf bin/*
+	rm -rf bin/* log/test/*
 

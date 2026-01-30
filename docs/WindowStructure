@@ -1,0 +1,16 @@
+The window structure editor_s should contain the followings:
+
+- a pointer to a  WINDOW variable - win
+- int with max row size - maw_win_row
+- int with max col size - max_win_col
+- int with current cursor row - row
+- int with current cursor col - col
+
+
+init_window() function has the following purpose:
+    - initialize win with newwin()
+    - initialize all row and col vars based on user input
+
+TO-DO:
+    Check that those values are not higher than general TERM size, and that current cursor positions
+    are not bigger than the windows max values

@@ -3,12 +3,15 @@
 4. CHeck a method to read efficiently from files and display just window size information
 5. Create a buffer storage for editing files
 6. Create github repo (DONE)
-7. Cleanup the code
+7. Cleanup the code (DONE 30.01.2026)
 8. Find a nicer method for display current position of variables onto the screen, it's hardcoded
-    and ugly
-
+    and ugly (DONE for switch)
+9. Remove compile shell script and go to a Makefile (DONE)
+10. How to update a file after editing it, find an efficient method
+    - After modifying a line, how should it look, and be saved ???
+11. Move this TODO list in Github issues
 BUG:
     When trying to read from a different window, escape characters are not interpreted.
     Check why, read ncurses implementation for special chars.
     RCA: Use of main_w before newwin is called for initialization
-    Solution: Initialize the WINDOW before calling keypad upon it.
+    Solution: Initialize the WINDOW before calling keypad upon it. (Fixed 29.01.2026)
