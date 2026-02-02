@@ -22,7 +22,7 @@ typedef struct editor_s{
 
 
 int row = 0; int col = 0;
-
+int load_first_time_up = 1;
 int max_row, max_col;
 int fd;
 
@@ -51,6 +51,7 @@ void onRowUpdate();
 /* Functions for manipulating the screen */
 void display_windows_size();
 void display_row_number();
+void display_file_contents();
 void display_data(); 
 
 void init_window(editor_s *window, int ncol, int nlines, int begin_y, int begin_x); 
@@ -100,8 +101,8 @@ int main(int argc, char **argv) {
         }
         refresh();
 #ifdef DEBUG_A
-        mvwprintw(main_w.win, 40, 40, "Max_row: %i, Max_col:%i, Cur_row:%i, Cur_col:%i",\
-                main_w.max_row, main_w.max_col, main_w.row, main_w.col);
+//        mvwprintw(main_w.win, 40, 40, "Max_row: %i, Max_col:%i, Cur_row:%i, Cur_col:%i",\
+//                main_w.max_row, main_w.max_col, main_w.row, main_w.col);
 #endif
         display_data();
     }
@@ -132,9 +133,10 @@ void init_screen() {
     keypad(main_w.win, TRUE);
 
     mvwprintw(main_w.win, max_row/2, (max_col - 1 - strlen(EDITOR_NAME))/2, "%s", EDITOR_NAME);
+    main_w.row = 0; main_w.col = 0;
 
     display_data();
-
+    load_first_time_up = 0;
     wrefresh(main_w.win);
 }
 
@@ -170,21 +172,47 @@ void display_row_number() {
     wattroff(row_w.win, A_BOLD);
 }
 
+void display_file_contents() {
+    read_file();
+    mvwprintw(main_w.win, main_w.row, main_w.col, "%s", file_buffer);
+}
+
 void display_data() {
     display_windows_size();
     display_row_number();
-
     wmove(main_w.win, main_w.row, main_w.col);// TO-DO: wrapper when calling move, to auto update row and col
-
+    if (load_first_time_up || main_w.row == main_w.row - 1 )
+        display_file_contents();
     wrefresh(main_w.win);
 }
 
 
 void open_file(char *filename) {
-    fd = open(filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); // study more about file rights at creation
+    fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); // study more about file rights at creation
     if (fd == -1) {
-        fprintf(stderr, "Failed to open the file\n");
-        LOG_I(INFO, "Failed to open the file");
+        fprintf(stderr, "Failed to open the file %s\n", filename);
+        LOG_I(INFO, "Failed to open the file %s", filename);
+        endwin();
         exit(-1);
     }
+}
+
+int read_file() {
+   int size = read(fd, file_buffer, FILE_CHUNCK_BUFFER_SIZE -  1);
+   file_buffer[FILE_CHUNCK_BUFFER_SIZE] = '\0';
+
+   if (size == 0) {
+       LOG_I(INFO, "End of file reached, no more input to parse");
+       return 0;
+   }
+
+   if (size == -1) {
+        LOG_I(ERROR, "File read() error");
+        perror("File read() error");
+        // in the future this needs to changed, it should just print an error
+        // and inform the user that the file cannot be read
+        endwin();
+        exit(EXIT_FAILURE); 
+   }
+   return size;
 }
