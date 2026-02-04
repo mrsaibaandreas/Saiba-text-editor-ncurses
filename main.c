@@ -100,13 +100,10 @@ int main(int argc, char **argv) {
                 break;
         }
         refresh();
-#ifdef DEBUG_A
-//        mvwprintw(main_w.win, 40, 40, "Max_row: %i, Max_col:%i, Cur_row:%i, Cur_col:%i",\
-//                main_w.max_row, main_w.max_col, main_w.row, main_w.col);
-#endif
         display_data();
     }
     endwin(); // close the screen
+    close(fd);
     return 0;
 }
 
@@ -126,8 +123,8 @@ void init_screen() {
     noecho(); // user input not displayed
     cbreak();
 
-    init_window(&main_w, max_row - 1, max_col - 4, 0, 3);
-    init_window(&row_w, max_row - 1, 3, 0, 0);
+    init_window(&main_w, max_row - 1, max_col - 5, 0, 3);
+    init_window(&row_w, max_row - 1, 4, 0, 0);
     init_window(&info_w, 1, max_col, max_row - 1, 0);
 
     keypad(main_w.win, TRUE);
@@ -163,7 +160,7 @@ void display_row_number() {
     int i = 0;
     while (i < max_row)
     {
-        mvwprintw(row_w.win, i, 0,"%3i", i + 1);
+        mvwprintw(row_w.win, i, 0,"%2i ", i + 1);
         i++;
     }
 
@@ -173,16 +170,19 @@ void display_row_number() {
 }
 
 void display_file_contents() {
-    read_file();
-    mvwprintw(main_w.win, main_w.row, main_w.col, "%s", file_buffer);
+    if (load_first_time_up || main_w.row == main_w.row - 1) {
+        read_file();
+    }
+    // we'll print everytime at 0 0 because no matter what line
+    // the cursor is, the window does not care about the line
+    mvwprintw(main_w.win, 0, 0, "%s", file_buffer); 
 }
 
 void display_data() {
     display_windows_size();
     display_row_number();
-    wmove(main_w.win, main_w.row, main_w.col);// TO-DO: wrapper when calling move, to auto update row and col
-    if (load_first_time_up || main_w.row == main_w.row - 1 )
         display_file_contents();
+    wmove(main_w.win, main_w.row, main_w.col);// TO-DO: wrapper when calling move, to auto update row and col
     wrefresh(main_w.win);
 }
 
