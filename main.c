@@ -9,6 +9,7 @@
 
 #define EDITOR_NAME "Saiba's editor"
 #define FILE_CHUNCK_BUFFER_SIZE 1024
+
 typedef enum editor_state {
     RAW,
     INSERT
@@ -40,9 +41,6 @@ void help() {
 }
 /* End of auxiliaries */
 
-/* File manipulation function */
-void open_file(char *filename);
-int read_file();
 /* End of file manipulation functions */
 // Callbacks for updating screen data
 void onInfoUpdate(); 
