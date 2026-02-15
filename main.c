@@ -1,8 +1,10 @@
+// add newline for removing leftovers at each refrsh
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <ncurses.h>
-
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 
 #include "logger.h"
@@ -21,6 +23,11 @@ typedef struct editor_s{
     int max_row, max_col;
 } editor_s;
 
+typedef struct _file_info {
+    int file_size_in_bytes;
+    int file_nr_of_rows;
+    int file_nr_of_characters;
+} file_info;
 
 int row = 0; int col = 0;
 int load_first_time_up = 1;
@@ -33,6 +40,7 @@ editor_state state = RAW;
 
 editor_s main_w, row_w, info_w;
 
+file_info info;
 
 /* Auxialiaries */
 void help() {
@@ -41,10 +49,11 @@ void help() {
 }
 /* End of auxiliaries */
 
+/* File manipulation functions */
+void open_file(char *filename);
+int read_file();
+void get_file_info(file_info *info);
 /* End of file manipulation functions */
-// Callbacks for updating screen data
-void onInfoUpdate(); 
-void onRowUpdate();
 
 /* Functions for manipulating the screen */
 void display_windows_size();
@@ -66,7 +75,7 @@ int main(int argc, char **argv) {
     INIT_LOG("log/test/");
     
     open_file(argv[1]); 
-
+    get_file_info(&info);
     init_screen();
     int input; 
     clear();
@@ -136,6 +145,7 @@ void init_screen() {
 }
 
 void display_windows_size() {
+    wclear(info_w.win);
     attron(A_BOLD);
     if (state == RAW)
         mvwprintw(info_w.win, 0, 0, "State: normal");
@@ -143,9 +153,9 @@ void display_windows_size() {
         mvwprintw(info_w.win, 0, 0, "State: insert");
 
     char windows_size[64];
-    snprintf(windows_size, 64, "R:%i C:%i, %i:%i", max_row - 1, max_col - 4, main_w.row, main_w.col); 
+    snprintf(windows_size, 64, "R:%i C:%i, %i:%i\n", max_row - 1, max_col - 4, main_w.row, main_w.col); 
 
-    mvwprintw(info_w.win, 0, max_col - strlen(windows_size), "%s", windows_size);
+    mvwaddnstr(info_w.win, 0, max_col - strlen(windows_size), windows_size, strlen(windows_size));
 
     attroff(A_BOLD);
     clear();
@@ -213,4 +223,36 @@ int read_file() {
         exit(EXIT_FAILURE); 
    }
    return size;
+}
+
+void get_file_info(file_info *info) {
+    struct stat sb;
+
+    if (fstat(fd, &sb) == -1) {
+        perror("File stat() error");
+        endwin();
+        exit(EXIT_FAILURE);
+    }
+
+    if ((sb.st_mode & S_IFMT) != S_IFREG) {
+        perror("Not a regular file");
+        endwin();
+        exit(EXIT_FAILURE);
+    }
+    
+    info->file_size_in_bytes = sb.st_size;
+
+    int lines = 0;
+    lseek(fd, 0, SEEK_SET);
+    char get_file_info_buffer[FILE_CHUNCK_BUFFER_SIZE]; 
+    while (read(fd, get_file_info_buffer, FILE_CHUNCK_BUFFER_SIZE - 1)) {
+        file_buffer[FILE_CHUNCK_BUFFER_SIZE] = '\0';
+        int count = 0;
+        while (get_file_info_buffer[count] != '\0') {
+            if (get_file_info_buffer[count++] == '\n') lines++;
+        }
+    }
+
+    info->file_nr_of_rows = lines;
+    lseek(fd, 0, SEEK_SET);
 }
